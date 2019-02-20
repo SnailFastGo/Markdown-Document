@@ -11,7 +11,7 @@
 
  - 列式存储
  - 分布式
- - 大规模并行处理（Massively Parallel Processing）
+ - MPP（Massively Parallel Processing）
  - 异步复制
  - 线性扩展
  - 数据最终一致
