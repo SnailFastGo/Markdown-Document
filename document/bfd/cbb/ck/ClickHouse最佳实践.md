@@ -72,7 +72,7 @@
 
 >可以使用多个CK实例的分布式表作为集群的访问入口，然后用Nginx代理这些实例，客户端直接访问Nginx，由Nginx将请求路由到代理的CK实例，这样既将请求分摊开，又避免了单点故障，同时实现了负载均衡和高可用。
 
-**优化项**
+**应用实践**
 
  - 硬件配置  
  
@@ -104,8 +104,14 @@ max_concurrent_queries | 100 | 150 | 最大支持的Query数量 | config.xml|
 session_timeout_ms | 3000 | 120000 | ClickHouse服务和Zookeeper保持的会话时长，超过该时间Zookeeper还收到不ClickHouse的心跳信息，会将与ClickHouse的Session断开 | metrika.xml|  
 
  
+ - 读写性能  
+ 
+  表中字段数量 | 单条记录大小 | 单台写入频率 | 单台写入批量大小 | 非聚合查询性能 | 聚合查询性能 |
+:-: | :-: | :-: | :-: | :-: | :-:
+18 | 1.5K | 3 | 300000 | 200亿数据量Ad-hoc 平均4.2秒 | 200亿数据量平均2秒
+ 
  **监控**
->项目中使用Grafana监控ClickHouse的各项性能指标，以达到数据统计和提前预警的目的，如下图所示：
+>项目中使用Grafana监控ClickHouse的各项性能指标，以达到数据统计和提前预警的目的。某一时刻的监控如下图所示：
 ![mornitor_ck_fs](https://github.com/SnailFastGo/Markdown-Document/blob/master/blob/pic/ck/monitor_fs.png)
 
 >使用Grafana监控CK有两种方式：
