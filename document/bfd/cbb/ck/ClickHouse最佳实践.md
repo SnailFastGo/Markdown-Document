@@ -1,7 +1,6 @@
 # ClickHouse最佳实践
 
 
----
 
 **ClickHouse是什么**
 
@@ -66,7 +65,7 @@
 
 >在实际应用中，往往会将某种类型的业务数据存储在多个CK集群中，当查询时，又要对客户端透明，好像所有数据存储在一个节点上。比如用户的通话记录，按照通话时用户所在地区存储到该地区的集群中，当查询某个用户所有的通话记录时，就需要同时查询多个集群中的数据。
 
->CK可以实现跨中心透明访问，将所有集群的分片都添加到一个CK实例中，并在该CK实例上创建分布式表，客户端查询的统一入口。当客户端查询该分布式表时，CK会将查询分发到所有分片上，并将各个分片的返回结果在分布式表所在节点上进行汇聚，将汇聚结果作为最终结果返回给客户端。
+>CK可以实现跨中心透明访问，将所有集群的分片都添加到一个CK实例中，并在该CK实例上创建分布式表，作为客户端查询的统一入口。当客户端查询该分布式表时，CK会将查询分发到所有分片上，并将各个分片的返回结果在分布式表所在节点上进行汇聚，将汇聚结果作为最终结果返回给客户端。
 
 **负载均衡&高可用**
 >使用使用一个CK实例的分布式表作为集群的统一访问入口，一旦该CK实例出现故障无法对外提供服务，那么整个集群的数据都将无法访问，这样会造成单点故障。或者当查询比较频繁时，所有查询请求都到一个CK实例上，也会造成该CK实例负载过高，拖慢查询的响应时间。
@@ -74,7 +73,36 @@
 >可以使用多个CK实例的分布式表作为集群的访问入口，然后用Nginx代理这些实例，客户端直接访问Nginx，由Nginx将请求路由到代理的CK实例，这样既将请求分摊开，又避免了单点故障，同时实现了负载均衡和高可用。
 
 **优化项**
- >参考wiki：[ClickHouse部分参数优化配置][1]
+
+ - 硬件配置  
+ 
+ CPU核数 | CPU频率 | Mem | Harddisk | NIC
+:-: | :-: | :-: | :-: | :-:
+40core | 1200MHZ | 256G | 48T | 10GB| 
+
+
+ - 软件版本  
+ 
+ 软件名称 | 版本号 
+:-: | :-: 
+ClickHouse | 1.1.54380 
+
+
+ - 参数调整
+
+ 参数名称 | 默认值 | 调整后的值 | 参数说明 | 参数所在配置文件
+:-: | :-: | :-: | :-: | :-:
+max_memory_usage_for_all_queries | 0 | 200G |  单台服务器上所有查询的内存使用量，默认没有限制 | users.xml |  
+max_memory_usage | 10G| 100G | 一个查询在单台服务器的最大内存使用量，默认是10GB | users.xml|  
+max_execution_time | 0 | 300 | 单次查询耗时的最长时间，单位为秒。默认没有限制 | users.xml|  
+distributed_product_mode | deny | local | 默认SQL中的子查询不允许使用分布式表，修改为local表示将子查询中对分布式表的查询转换为对应的本地表 | users.xml|  
+background_pool_size | 16 | 32 | 后台用于merge的线程池大小 | users.xml|  
+log_queries | 0 | 1 | system.query_log表的开关。默认值为0，不存在该表。修改为1，系统会自动创建system.query_log表，并记录每次query的日志信息 | users.xml|  
+skip_unavailable_shards | 0 | 1 | 当通过分布式表查询时，遇到无效的shard是否跳过。默认值为0表示不跳过，抛异常。设置值为1表示跳过无效shard | users.xml|  
+keep_alive_timeout | 10 | 600 | 服务端与客户端保持长连接的时长，单位为秒 | config.xml|  
+max_concurrent_queries | 100 | 150 | 最大支持的Query数量 | config.xml|  
+session_timeout_ms | 3000 | 120000 | ClickHouse服务和Zookeeper保持的会话时长，超过该时间Zookeeper还收到不ClickHouse的心跳信息，会将与ClickHouse的Session断开 | metrika.xml|  
+
  
  **监控**
 >项目中使用Grafana监控ClickHouse的各项性能指标，以达到数据统计和提前预警的目的，如下图所示：
@@ -86,6 +114,3 @@
  
 
  >- Grafana自己的ClickHouse插件
-
-
-  [1]: http://wiki.baifendian.com/pages/viewpage.action?pageId=23672777#id-06.%E7%BB%84%E4%BB%B6%E9%83%A8%E7%BD%B2%E9%85%8D%E7%BD%AECheck%E9%A1%B9-%EF%BC%881%EF%BC%89%E5%8F%82%E6%95%B0%E8%AE%BE%E7%BD%AE
