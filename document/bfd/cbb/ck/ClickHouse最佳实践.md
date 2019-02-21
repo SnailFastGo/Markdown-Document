@@ -49,12 +49,16 @@
 
 **读写方式**
 
+- 创建本地表  
+![create_local_table](https://github.com/SnailFastGo/Markdown-Document/blob/master/blob/pic/ck/create_local_table.png)
+- 创建分布式表  
+![create_distribute_table](https://github.com/SnailFastGo/Markdown-Document/blob/master/blob/pic/ck/create_distribute_table.png)
 - 写本地表  
     数据写入时，可以由客户端控制数据分布，直接写入集群中CK实例的本地表。
 - 写分布式表  
     数据写入时，可以先写入集群中的分布式表，再由分布式表将Insert语句分发到集群各个节点上执行，分布式表不存储实际数据。
 - 数据副本  
-    在集群配置中，shard标签里面配置的replica互为副本。可以将internal_replication设置成true，通过Zookeeper异步复制数据。
+    在集群配置中，shard标签里面配置的replica互为副本。可以将internal_replication设置成true，通过Zookeeper异步复制数据，相同ZK路径下的表会相互复制。
 - 读分布式表  
 使用Distribute表引擎作为集群的统一访问入口，当客户端查询分布式表时，CK会将查询分发到集群中各个节点上执行，并将各个节点的返回结果在分布式表所在节点上进行汇聚，将汇聚结果作为最终结果返回给客户端。
 
